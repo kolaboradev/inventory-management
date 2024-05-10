@@ -9,5 +9,5 @@ import (
 
 type StaffServiceInterface interface {
 	Register(ctx context.Context, request staffRequest.StaffCreate) staffResponse.StaffResponse
-	Login()
+	Login(ctx context.Context, request staffRequest.StaffLogin) staffResponse.StaffResponse
 }

@@ -37,5 +37,15 @@ func (controller *StaffController) Register(c *fiber.Ctx) error {
 	})
 }
 func (controller *StaffController) Login(c *fiber.Ctx) error {
-	panic("implement me")
+	staffRequest := staffRequest.StaffLogin{}
+	if err := c.BodyParser(&staffRequest); err != nil {
+		return err
+	}
+	staffResponse := controller.ServiceStaff.Login(context.Background(), staffRequest)
+	c.Set("X-Author", "Kolaboradev")
+	c.Status(200)
+	return c.JSON(webResponse.WebResponse{
+		Message: "login succes",
+		Data:    staffResponse,
+	})
 }

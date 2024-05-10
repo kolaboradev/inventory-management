@@ -3,19 +3,15 @@ package staffService
 import (
 	"context"
 	"database/sql"
-	"os"
-	"strconv"
-	"time"
 
 	"github.com/go-playground/validator/v10"
-	"github.com/golang-jwt/jwt/v5"
-	"github.com/google/uuid"
+	"github.com/kolaboradev/inventory/src/exception"
+	"github.com/kolaboradev/inventory/src/helper"
 	staffentity "github.com/kolaboradev/inventory/src/models/entities/staff"
 
 	staffRequest "github.com/kolaboradev/inventory/src/models/web/request/staff"
 	staffResponse "github.com/kolaboradev/inventory/src/models/web/response/staff"
 	staffrepository "github.com/kolaboradev/inventory/src/repositories/staff"
-	"golang.org/x/crypto/bcrypt"
 )
 
 type StaffService struct {
@@ -24,94 +20,80 @@ type StaffService struct {
 	validator       *validator.Validate
 }
 
-func NewStaffService(staffRepo staffrepository.StaffRepositoryInterface, db *sql.DB, validator validator.Validate) StaffServiceInterface {
+func NewStaffService(staffRepo staffrepository.StaffRepositoryInterface, db *sql.DB, validator *validator.Validate) StaffServiceInterface {
 	return &StaffService{
 		StaffRepository: staffRepo,
 		DB:              db,
-		validator:       &validator,
+		validator:       validator,
 	}
 }
 
 func (service *StaffService) Register(ctx context.Context, request staffRequest.StaffCreate) staffResponse.StaffResponse {
 	err := service.validator.Struct(request)
-	if err != nil {
-		panic(err)
-	}
+	helper.ErrorIfPanic(err)
 
 	tx, err := service.DB.Begin()
-	if err != nil {
-		panic(err)
+	helper.ErrorIfPanic(err)
+
+	defer helper.RollbackOrCommit(tx)
+
+	_, err = service.StaffRepository.FindByPhoneNumber(ctx, tx, request.PhoneNumber)
+	if err == nil {
+		panic(exception.NewConflictError("Phone number exists"))
 	}
 
-	defer func() {
-		err := recover()
-		if err != nil {
-			errRollback := tx.Rollback()
-			if errRollback != nil {
-				panic(errRollback)
-			}
-			panic(err)
-		} else {
-			errCommit := tx.Commit()
-			if errCommit != nil {
-				panic(errCommit)
-			}
-		}
-	}()
+	hashPassword := helper.HashPassword(request.Password)
 
-	// _, err = service.StaffRepository.FindByPhoneNumber(request.PhoneNumber)
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	saltStr := os.Getenv("BCRYPT_SALT")
-	salt, err := strconv.Atoi(saltStr)
-	if err != nil {
-		panic(err)
-	}
-
-	passwordHash, err := bcrypt.GenerateFromPassword([]byte(request.Password), salt)
-	if err != nil {
-		panic(err)
-	}
-
-	id := uuid.New()
-	timeNowStr := time.Now().Format(time.RFC3339)
-	timeNow, err := time.Parse(time.RFC3339, timeNowStr)
-	if err != nil {
-		panic(err)
-	}
+	id := helper.UUIDStr()
+	timeNow := helper.TimeISO8601()
 
 	staff := staffentity.Staff{
-		Id:          id.String(),
+		Id:          id,
 		Name:        request.Name,
 		PhoneNumber: request.PhoneNumber,
-		Password:    string(passwordHash),
+		Password:    hashPassword,
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}
 
 	service.StaffRepository.Save(ctx, tx, &staff)
 
-	token := jwt.New(jwt.SigningMethodHS256)
-	claims := token.Claims.(jwt.MapClaims)
-	claims["staffId"] = staff.Id
-	claims["exp"] = time.Now().Add(time.Hour * 8)
-	claims["phoneNumber"] = staff.PhoneNumber
-
-	secretKeys := []byte(os.Getenv("JWT_SECRET"))
-
-	secretToken, err := token.SignedString(secretKeys)
-	if err != nil {
-		panic(err)
-	}
+	token := helper.GenerateTokenJWT(staff)
 
 	return staffResponse.StaffResponse{
 		Id:          staff.Id,
 		Name:        staff.Name,
 		PhoneNumber: staff.PhoneNumber,
-		AccessToken: secretToken,
+		AccessToken: token,
 	}
 
 }
-func (service *StaffService) Login() {}
+func (service *StaffService) Login(ctx context.Context, request staffRequest.StaffLogin) staffResponse.StaffResponse {
+	err := service.validator.Struct(request)
+	helper.ErrorIfPanic(err)
+
+	tx, err := service.DB.Begin()
+	helper.ErrorIfPanic(err)
+
+	defer helper.RollbackOrCommit(tx)
+
+	staff, err := service.StaffRepository.FindByPhoneNumber(ctx, tx, request.PhoneNumber)
+	if err != nil {
+		panic(exception.NewNotFoundError("staff is not found"))
+	}
+
+	passwordIsValid := helper.CompareHashPassword(staff.Password, request.Password)
+
+	if !passwordIsValid {
+		panic(exception.NewBadRequestError("password is wrong"))
+	}
+
+	token := helper.GenerateTokenJWT(staff)
+
+	return staffResponse.StaffResponse{
+		Id:          staff.Id,
+		Name:        staff.Name,
+		PhoneNumber: staff.PhoneNumber,
+		AccessToken: token,
+	}
+}

@@ -9,5 +9,5 @@ import (
 
 type StaffRepositoryInterface interface {
 	Save(ctx context.Context, tx *sql.Tx, staff *staffentity.Staff) *staffentity.Staff
-	FindByPhoneNumber(PhoneNumber string) (staffentity.Staff, error)
+	FindByPhoneNumber(ctx context.Context, tx *sql.Tx, PhoneNumber string) (staffentity.Staff, error)
 }
