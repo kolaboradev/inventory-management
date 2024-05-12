@@ -21,5 +21,5 @@ type OrderCreateRequest struct {
 	CustomerId     string                `validate:"required"`
 	ProductDetails []OrderProductDetails `validate:"required,min=1,dive"`
 	Paid           int                   `validate:"required,min=1"`
-	Change         int                   `validate:"required,min=0"`
+	Change         *int                  `validate:"min=0"`
 }

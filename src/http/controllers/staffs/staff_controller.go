@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/kolaboradev/inventory/src/exception"
 	staffRequest "github.com/kolaboradev/inventory/src/models/web/request/staff"
 	webResponse "github.com/kolaboradev/inventory/src/models/web/response"
 	staffService "github.com/kolaboradev/inventory/src/services/staff"
@@ -23,7 +24,7 @@ func (controller *StaffController) Register(c *fiber.Ctx) error {
 	staffRequest := staffRequest.StaffCreate{}
 
 	if err := c.BodyParser(&staffRequest); err != nil {
-		return err
+		panic(exception.NewBadRequestError("Data invalid"))
 	}
 
 	staffResponse := controller.ServiceStaff.Register(context.Background(), staffRequest)
@@ -39,7 +40,7 @@ func (controller *StaffController) Register(c *fiber.Ctx) error {
 func (controller *StaffController) Login(c *fiber.Ctx) error {
 	staffRequest := staffRequest.StaffLogin{}
 	if err := c.BodyParser(&staffRequest); err != nil {
-		return err
+		panic(exception.NewBadRequestError("Data invalid"))
 	}
 	staffResponse := controller.ServiceStaff.Login(context.Background(), staffRequest)
 	c.Set("X-Author", "Kolaboradev")

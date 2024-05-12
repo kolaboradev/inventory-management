@@ -3,7 +3,6 @@ package orderService
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kolaboradev/inventory/src/exception"
@@ -50,19 +49,22 @@ func (service *OrderService) Create(ctx context.Context, request orderRequest.Or
 	pricePaid := 0
 
 	for _, value := range request.ProductDetails {
+		isValid := service.productRepo.FindByIdBool(ctx, tx, value.ProductId)
+		if !isValid {
+			panic(exception.NewNotFoundError("product is not found"))
+		}
 		product := service.productRepo.FindById(ctx, tx, value.ProductId)
 		if !product.IsAvailable {
 			panic(exception.NewBadRequestError("product not available"))
 		}
 		pricePaid += product.Price * value.Quantity
 	}
-	fmt.Println(pricePaid)
 
 	if pricePaid > request.Paid {
 		panic(exception.NewBadRequestError("is not enough based on all bought product"))
 	}
 	changeReturn := request.Paid - pricePaid
-	if changeReturn != request.Change {
+	if changeReturn != *request.Change {
 		panic(exception.NewBadRequestError("is not right, based on all bought product, and what is paid"))
 	}
 
@@ -74,7 +76,7 @@ func (service *OrderService) Create(ctx context.Context, request orderRequest.Or
 			Id:         idOrder,
 			CustomerId: request.CustomerId,
 			Paid:       request.Paid,
-			Change:     request.Change,
+			Change:     *request.Change,
 			CreatedAt:  timeNow,
 		},
 	}
@@ -125,6 +127,7 @@ func (service *OrderService) FindAll(ctx context.Context, filters orderRequest.O
 			ProductDetails: odResponse,
 			Paid:           order.Order.Paid,
 			Change:         order.Order.Change,
+			CreatedAt:      order.Order.CreatedAt,
 		})
 	}
 	return orderResponses

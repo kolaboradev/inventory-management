@@ -3,7 +3,6 @@ package productService
 import (
 	"context"
 	"database/sql"
-	"fmt"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/kolaboradev/inventory/src/exception"
@@ -47,9 +46,9 @@ func (service *ProductService) Create(ctx context.Context, request productReques
 		ImageUrl:    request.ImageUrl,
 		Notes:       request.Notes,
 		Price:       request.Price,
-		Stock:       request.Stock,
+		Stock:       *request.Stock,
 		Location:    request.Location,
-		IsAvailable: request.IsAvailable,
+		IsAvailable: *request.IsAvailable,
 		CreatedAt:   timeNow,
 		UpdatedAt:   timeNow,
 	}
@@ -88,9 +87,9 @@ func (service *ProductService) Update(ctx context.Context, request productReques
 		ImageUrl:    request.ImageUrl,
 		Notes:       request.Notes,
 		Price:       request.Price,
-		Stock:       request.Stock,
+		Stock:       *request.Stock,
 		Location:    request.Location,
-		IsAvailable: request.IsAvailable,
+		IsAvailable: *request.IsAvailable,
 		UpdatedAt:   timeNow,
 	}
 
@@ -115,8 +114,6 @@ func (service *ProductService) DeleteById(ctx context.Context, id string) {
 	tx, err := service.DB.Begin()
 	helper.ErrorIfPanic(err)
 	defer helper.RollbackOrCommit(tx)
-
-	fmt.Println("service")
 
 	findProduct := service.productRepo.FindByIdBool(ctx, tx, id)
 

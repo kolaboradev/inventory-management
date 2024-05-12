@@ -4,6 +4,7 @@ import (
 	"context"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/kolaboradev/inventory/src/exception"
 	customerRequest "github.com/kolaboradev/inventory/src/models/web/request/customer"
 	webResponse "github.com/kolaboradev/inventory/src/models/web/response"
 	customerService "github.com/kolaboradev/inventory/src/services/customer"
@@ -22,7 +23,7 @@ func NewCustomerController(cs customerService.CustomerServiceInterface) Customer
 func (controller *CustomerController) Create(c *fiber.Ctx) error {
 	customerRequest := customerRequest.CustomerCreateRequest{}
 	if err := c.BodyParser(&customerRequest); err != nil {
-		return err
+		panic(exception.NewBadRequestError("Data invalid"))
 	}
 
 	customerResponse := controller.customerService.Create(context.Background(), customerRequest)

@@ -142,17 +142,17 @@ func (repository *ProductRepository) FindAll(ctx context.Context, tx *sql.Tx, fi
 		query += " ORDER BY created_at DESC"
 	}
 
+	if filters.Offset >= 0 {
+		query += fmt.Sprintf(" OFFSET $%d", argIndex)
+		args = append(args, filters.Offset)
+		argIndex++
+	}
 	if filters.Limit >= 0 {
 		if filters.Limit == 0 {
 			filters.Limit = 5
 		}
 		query += fmt.Sprintf(" LIMIT $%d", argIndex)
 		args = append(args, filters.Limit)
-		argIndex++
-	}
-	if filters.Offset >= 0 {
-		query += fmt.Sprintf(" OFFSET $%d", argIndex)
-		args = append(args, filters.Offset)
 		argIndex++
 	}
 

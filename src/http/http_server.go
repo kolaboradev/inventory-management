@@ -37,6 +37,7 @@ func (server *HttpServer) Listen() {
 	validator := validator.New()
 	validator.RegisterValidation("phone_number", helper.MustPhoneNumber)
 	validator.RegisterValidation("category", helper.MatchCategoryProduct)
+	validator.RegisterValidation("url_valid", helper.IsValidUrl)
 
 	// ? Staff
 	staffRepo := staffrepository.NewStaffRepository()
@@ -68,5 +69,5 @@ func (server *HttpServer) Listen() {
 	productV1Routes.SetRoutesProduct(v1, productController)
 	customerV1Routes.SetRoutesProduct(v1, customerController)
 
-	app.Listen(":3000")
+	app.Listen(":8080")
 }

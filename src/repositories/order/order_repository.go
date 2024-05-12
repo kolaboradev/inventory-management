@@ -46,7 +46,7 @@ func (repository *OrderRepository) Create(ctx context.Context, tx *sql.Tx, order
 }
 
 func (repository *OrderRepository) FindAll(ctx context.Context, tx *sql.Tx, filters orderRequest.OrderGet) []orderEntity.OrderCreate {
-	query := "SELECT id, customer_id, paid, change FROM orders WHERE 1=1"
+	query := "SELECT id, customer_id, paid, change, created_at FROM orders WHERE 1=1"
 
 	var args []interface{}
 	argIndex := 1
@@ -78,8 +78,8 @@ func (repository *OrderRepository) FindAll(ctx context.Context, tx *sql.Tx, filt
 		args = append(args, filters.Limit)
 		argIndex++
 	}
-
 	if filters.Offset >= 0 {
+		filters.Offset += 1
 		query += fmt.Sprintf(" OFFSET $%d", argIndex)
 		args = append(args, filters.Offset)
 		argIndex++
@@ -92,7 +92,7 @@ func (repository *OrderRepository) FindAll(ctx context.Context, tx *sql.Tx, filt
 	var orders []orderEntity.Order
 	for rows.Next() {
 		order := orderEntity.Order{}
-		err = rows.Scan(&order.Id, &order.CustomerId, &order.Paid, &order.Change)
+		err = rows.Scan(&order.Id, &order.CustomerId, &order.Paid, &order.Change, &order.CreatedAt)
 		helper.ErrorIfPanic(err)
 
 		orders = append(orders, order)

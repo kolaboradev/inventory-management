@@ -2,9 +2,9 @@ package productController
 
 import (
 	"context"
-	"fmt"
 
 	"github.com/gofiber/fiber/v2"
+	"github.com/kolaboradev/inventory/src/exception"
 	orderRequest "github.com/kolaboradev/inventory/src/models/web/request/order"
 	productRequest "github.com/kolaboradev/inventory/src/models/web/request/product"
 	webResponse "github.com/kolaboradev/inventory/src/models/web/response"
@@ -26,11 +26,10 @@ func NewProductController(ps productService.ProductServiceInterface, os orderSer
 
 func (controller *ProductController) Create(c *fiber.Ctx) error {
 	productRequest := productRequest.ProductCreate{}
-	staff := c.Locals("staffId").(string)
-	fmt.Println(staff)
 	if err := c.BodyParser(&productRequest); err != nil {
-		return err
+		panic(exception.NewBadRequestError("Data invalid"))
 	}
+
 	productResponse := controller.productService.Create(context.Background(), productRequest)
 
 	c.Set("X-Author", "Kolaboradev")
@@ -48,7 +47,7 @@ func (controller *ProductController) Update(c *fiber.Ctx) error {
 		Id: id,
 	}
 	if err := c.BodyParser(&productRequest); err != nil {
-		return err
+		panic(exception.NewBadRequestError("Data invalid"))
 	}
 	productResponse := controller.productService.Update(context.Background(), productRequest)
 
@@ -61,8 +60,6 @@ func (controller *ProductController) Update(c *fiber.Ctx) error {
 
 func (controller *ProductController) DeleteById(c *fiber.Ctx) error {
 	id := c.Params("id")
-	fmt.Println("controller")
-	fmt.Println(id)
 	controller.productService.DeleteById(context.Background(), id)
 	c.Set("X-Author", "Kolaboradev")
 	return c.JSON(webResponse.WebResponse{
@@ -134,7 +131,7 @@ func (controller *ProductController) FindAllForCustomer(c *fiber.Ctx) error {
 func (controller *ProductController) CreateCheckout(c *fiber.Ctx) error {
 	orderRequest := orderRequest.OrderCreateRequest{}
 	if err := c.BodyParser(&orderRequest); err != nil {
-		return err
+		panic(exception.NewBadRequestError("Data invalid"))
 	}
 
 	orderResponse := controller.orderService.Create(context.Background(), orderRequest)

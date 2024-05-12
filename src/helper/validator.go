@@ -38,6 +38,20 @@ func MatchCategoryProduct(field validator.FieldLevel) bool {
 	return false
 }
 
+func IsValidUrl(field validator.FieldLevel) bool {
+	value, ok := field.Field().Interface().(string)
+	if ok {
+		var urlRegex = regexp.MustCompile(`^(http|https)://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/[a-zA-Z0-9-._~:?#@!$&'()*+,;=]*)*$`)
+		return urlRegex.MatchString(value)
+	}
+	return false
+}
+
+func IsValidURL(url string) bool {
+	var urlRegex = regexp.MustCompile(`^(http|https)://[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}(/[a-zA-Z0-9-._~:?#@!$&'()*+,;=]*)*$`)
+	return urlRegex.MatchString(url)
+}
+
 func CustomMessageValidation(valErr validator.FieldError) string {
 	switch valErr.ActualTag() {
 	case "phone_number":
@@ -52,6 +66,8 @@ func CustomMessageValidation(valErr validator.FieldError) string {
 		return fmt.Sprintf("%s can't be more than %s", valErr.Field(), maxParam)
 	case "category":
 		return "The product does not match the existing type"
+	case "url_valid":
+		return "image not url"
 	default:
 		return "Tag not implement custom message error"
 	}
