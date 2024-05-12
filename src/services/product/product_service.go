@@ -72,7 +72,7 @@ func (service *ProductService) Update(ctx context.Context, request productReques
 	helper.ErrorIfPanic(err)
 	defer helper.RollbackOrCommit(tx)
 
-	findProduct := service.productRepo.FindById(ctx, tx, request.Id)
+	findProduct := service.productRepo.FindByIdBool(ctx, tx, request.Id)
 
 	if !findProduct {
 		panic(exception.NewNotFoundError("product not found"))
@@ -118,11 +118,72 @@ func (service *ProductService) DeleteById(ctx context.Context, id string) {
 
 	fmt.Println("service")
 
-	findProduct := service.productRepo.FindById(ctx, tx, id)
+	findProduct := service.productRepo.FindByIdBool(ctx, tx, id)
 
 	if !findProduct {
 		panic(exception.NewNotFoundError("product not found"))
 	}
 
 	service.productRepo.DeleteById(ctx, tx, id)
+}
+
+func (service *ProductService) FindAll(ctx context.Context, filters productRequest.ProductGetFilter) []productResponse.ProductGetResponse {
+	tx, err := service.DB.Begin()
+	helper.ErrorIfPanic(err)
+	defer helper.RollbackOrCommit(tx)
+
+	products := service.productRepo.FindAll(ctx, tx, filters)
+
+	var productResponses []productResponse.ProductGetResponse
+
+	for _, value := range products {
+		product := productResponse.ProductGetResponse{
+			Id:          value.Id,
+			Name:        value.Name,
+			Sku:         value.Sku,
+			Category:    value.Category,
+			ImageUrl:    value.ImageUrl,
+			Notes:       value.Notes,
+			Price:       value.Price,
+			Stock:       value.Stock,
+			Location:    value.Location,
+			IsAvailable: value.IsAvailable,
+			CreatedAt:   value.CreatedAt,
+			UpdateAt:    value.UpdatedAt,
+		}
+		productResponses = append(productResponses, product)
+	}
+
+	return productResponses
+
+}
+
+func (service *ProductService) FindAllForCustomer(ctx context.Context, filters productRequest.ProductGetFilter) []productResponse.ProductGetResponse {
+	tx, err := service.DB.Begin()
+	helper.ErrorIfPanic(err)
+	defer helper.RollbackOrCommit(tx)
+
+	products := service.productRepo.FindAll(ctx, tx, filters)
+
+	var productResponses []productResponse.ProductGetResponse
+
+	for _, value := range products {
+		product := productResponse.ProductGetResponse{
+			Id:          value.Id,
+			Name:        value.Name,
+			Sku:         value.Sku,
+			Category:    value.Category,
+			ImageUrl:    value.ImageUrl,
+			Notes:       value.Notes,
+			Price:       value.Price,
+			Stock:       value.Stock,
+			Location:    value.Location,
+			IsAvailable: value.IsAvailable,
+			CreatedAt:   value.CreatedAt,
+			UpdateAt:    value.UpdatedAt,
+		}
+		productResponses = append(productResponses, product)
+	}
+
+	return productResponses
 }

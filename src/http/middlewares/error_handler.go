@@ -8,6 +8,7 @@ import (
 	"github.com/kolaboradev/inventory/src/exception"
 	"github.com/kolaboradev/inventory/src/helper"
 	webResponse "github.com/kolaboradev/inventory/src/models/web/response"
+	"github.com/lib/pq"
 )
 
 func ErrorHandle(c *fiber.Ctx, err error) error {
@@ -42,6 +43,13 @@ func ErrorHandle(c *fiber.Ctx, err error) error {
 		return c.JSON(webResponse.WebResponse{
 			Message: "Validation Error",
 			Data:    message,
+		})
+	}
+	if value, ok := err.(*pq.Error); ok && value.Code == "23514" && value.Constraint == "products_stock_check" {
+		c.Status(400)
+		return c.JSON(webResponse.WebResponse{
+			Message: "BAD REQUEST",
+			Data:    "one of productIds stock is not enough",
 		})
 	}
 

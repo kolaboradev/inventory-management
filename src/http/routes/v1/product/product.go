@@ -7,9 +7,13 @@ import (
 )
 
 func SetRoutesProduct(router fiber.Router, pc productController.ProductControllerInterface) {
-	staffGrup := router.Group("/product")
+	productGroup := router.Group("/product")
 
-	staffGrup.Post("", middlewares.AuthMiddleware, pc.Create)
-	staffGrup.Put("/:id", middlewares.AuthMiddleware, pc.Update)
-	staffGrup.Delete("/:id", middlewares.AuthMiddleware, pc.DeleteById)
+	productGroup.Get("/customer", pc.FindAllForCustomer)
+	productGroup.Post("", middlewares.AuthMiddleware, pc.Create)
+	productGroup.Put("/:id", middlewares.AuthMiddleware, pc.Update)
+	productGroup.Delete("/:id", middlewares.AuthMiddleware, pc.DeleteById)
+	productGroup.Get("", middlewares.AuthMiddleware, pc.FindAll)
+	productGroup.Post("/checkout", middlewares.AuthMiddleware, pc.CreateCheckout)
+	productGroup.Get("/checkout/history", middlewares.AuthMiddleware, pc.HistoryCheckout)
 }

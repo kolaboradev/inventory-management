@@ -1,0 +1,7 @@
+CREATE TABLE IF NOT EXISTS customers (
+    id VARCHAR(255) PRIMARY KEY NOT NULL,
+    name VARCHAR(30) NOT NULL,
+    phone_number VARCHAR(16) NOT NULL UNIQUE,
+    created_at TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP NOT NULL
+);
